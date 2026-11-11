@@ -16,6 +16,11 @@ h1,h2,h3,.logo{font-family:Philosopher,Georgia,serif;font-weight:700}
 .nav{display:flex;gap:22px;margin-left:auto}.nav a{color:var(--mute);text-decoration:none;font-size:15px}.nav a:hover{color:var(--ink)}
 /* игра */
 .play{padding:30px 0 0}
+.play .crumbs{margin:0 0 14px}
+.modes{display:inline-flex;gap:4px;padding:4px;margin:0 0 18px;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
+.modes a{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border-radius:9px;color:var(--mute);text-decoration:none;font-weight:600;font-size:15px}
+.modes a:hover{color:var(--ink)}
+.modes a[aria-current]{background:var(--ivory);color:#20140C}
 .play__head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin:0 0 20px}
 .play h1{font-size:clamp(30px,4.2vw,50px);line-height:1.05;margin:0}
 .play__lead{color:var(--mute);margin:0;max-width:30em;font-size:16px}
@@ -109,7 +114,7 @@ h1,h2,h3,.logo{font-family:Philosopher,Georgia,serif;font-weight:700}
 @media(max-width:1000px){.nb{grid-template-columns:1fr}.nb__msg{min-height:0}.howto{grid-template-columns:1fr 1fr}.play__head{display:block}.play__lead{margin-top:8px}}
 @media(max-width:900px){.rules{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.rules,.rules--2{grid-template-columns:1fr}}
-@media(max-width:760px){.nav{display:none}.more{grid-template-columns:1fr}.nb__frame{padding:6px;border-radius:12px}.pt__n{font-size:8px}.ck{font-size:9px}.howto{grid-template-columns:1fr}}
+@media(max-width:760px){.logo{font-size:19px;white-space:nowrap}.logo img{width:28px;height:28px}.nav{display:none}.more{grid-template-columns:1fr}.nb__frame{padding:6px;border-radius:12px}.pt__n{font-size:8px}.ck{font-size:9px}.howto{grid-template-columns:1fr}}
 
 /* ---- Lucky Bear: купон ---- */
 .lbc{--cut:136px;display:grid;grid-template-columns:var(--cut) 1fr;margin:36px 0;border-radius:16px;background:var(--lb-body);color:var(--lb-ink);
