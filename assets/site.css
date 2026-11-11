@@ -120,6 +120,8 @@ h1,h2,h3,.logo{font-family:Philosopher,Georgia,serif;font-weight:700}
 .lbc{--cut:136px;display:grid;grid-template-columns:var(--cut) 1fr;margin:36px 0;border-radius:16px;background:var(--lb-body);color:var(--lb-ink);
  -webkit-mask:radial-gradient(circle 12px at var(--cut) 0,#0000 97%,#000) top/100% 51% no-repeat,radial-gradient(circle 12px at var(--cut) 100%,#0000 97%,#000) bottom/100% 51% no-repeat;
  mask:radial-gradient(circle 12px at var(--cut) 0,#0000 97%,#000) top/100% 51% no-repeat,radial-gradient(circle 12px at var(--cut) 100%,#0000 97%,#000) bottom/100% 51% no-repeat}
+.lbc{animation:lbfloat 2.6s ease-in-out infinite;will-change:transform}.lbc:hover,.lbc:focus-within{animation-play-state:paused}
+@keyframes lbfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .lbc__stub{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:20px 10px;background:var(--lb-stub);color:var(--lb-stub-ink);border-right:3px dashed var(--lb-body);text-align:center}
 .lbc__brand{font-size:12px;font-weight:700;letter-spacing:.04em;opacity:.8;margin-bottom:2px;white-space:nowrap}
 .lbc__pct{font:700 42px/0.95 var(--lb-display);letter-spacing:-.02em}
