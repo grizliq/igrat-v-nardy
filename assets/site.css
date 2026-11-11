@@ -42,7 +42,12 @@ h1,h2,h3,.logo{font-family:Philosopher,Georgia,serif;font-weight:700}
 .bar{border:0;margin:0;padding:6px 0;background:var(--frame);display:flex;flex-direction:column;align-items:center;gap:2px;font:inherit}
 .bar--bot{justify-content:flex-end;flex-direction:column-reverse}
 .bar .ck{width:78%}
-.is-pick{cursor:pointer}
+.is-pick{cursor:grab;touch-action:none}
+.nb__board{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.ck--ghost{position:fixed;box-shadow:inset 0 0 0 2px #C7B28A,inset 0 0 0 6px #F6EFE2,inset 0 0 0 7.5px #DCCBA8,0 8px 14px rgba(0,0,0,.4)!important}
+.ck--b.ck--ghost{box-shadow:inset 0 0 0 2px #6B4A33,inset 0 0 0 6px #2A1A10,inset 0 0 0 7.5px #4A3122,0 8px 14px rgba(0,0,0,.5)!important}
+.ck--ghost.is-drag{cursor:grabbing;scale:1.12}
+.pt.is-to.is-hot::after{background:#FFF0CD;border-style:solid}.nb__offbtn.is-hot{background:var(--ivory);border-color:var(--ivory)}
 .pt.is-pick .pt__stack .ck:last-child,.bar.is-pick .ck:last-child{box-shadow:0 0 0 3px var(--brass)}
 .pt.is-sel .pt__stack .ck:last-child,.bar.is-sel .ck:last-child{box-shadow:0 0 0 4px #FFE3A3}
 .pt.is-to{cursor:pointer}

@@ -172,7 +172,9 @@
   function roll() { return [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)]; }
   function expand(r) { return r[0] === r[1] ? [r[0], r[0], r[0], r[0]] : r.slice(); }
 
+  var gid = 0;
   function newGame() {
+    gid++;
     S = start(); hist = []; done = []; sel = null; legal = null; busy = false; rolled = null;
     var a, b; do { a = roll()[0]; b = roll()[0]; } while (a === b);
     if (a > b) { turn = W; beginHuman([a, b]); msg("Вам выпало " + a + ", компьютеру " + b + " — вы ходите первым. Нажмите на свою шашку."); }
@@ -195,19 +197,22 @@
   }
 
   function aiTurn(r) {
+    var my = gid;
     busy = true; rolled = r; render();
     var seqs = sequences(S, B, expand(r)), best = null, bs = -1e9;
     seqs.forEach(function (o) { var v = evaluate(o.st, B) + Math.random() * 0.4; if (v > bs) { bs = v; best = o; } });
     if (!best || !best.seq.length) { busy = false; turn = W; render(); msg("Компьютеру выпало " + r.join(" и ") + " — ходов нет. Бросайте кости."); return; }
     var steps = best.seq.slice();
     (function step() {
+      if (my !== gid) return;
       if (!steps.length) {
         busy = false;
         if (S.off[B] === 15) { finish(B); return; }
         turn = W; render(); msg("Компьютер сходил на " + r.join(" и ") + ". Бросайте кости.");
         return;
       }
-      S = apply(S, B, steps.shift()); render(); setTimeout(step, 380);
+      var m = steps.shift();
+      moveAnimated(B, m, 480, function () { S = apply(S, B, m); }, function () { setTimeout(step, 130); });
     })();
   }
 
@@ -218,23 +223,129 @@
     root.classList.add("is-over");
   }
 
-  root.addEventListener("click", function (e) {
+
+  function idOf(side, n) { if (side === W) return n === 25 ? "barW" : n === 0 ? "offW" : n; return n === 0 ? "barB" : n === 25 ? "offB" : n; }
+  function victimBar(side, m) { var to = m.to; return to >= 1 && to <= 24 && S.p[to] === -side ? (side === W ? "barB" : "barW") : null; }
+
+  // ---------- плавные ходы и перетаскивание ----------
+  var anim = false, drag = null;
+  function slot(id) {
+    if (id === "barW") return root.querySelector(".bar--bot");
+    if (id === "barB") return root.querySelector(".bar--top");
+    if (id === "offW") return elOff.querySelector("span");
+    if (id === "offB") { var s = elOff.querySelectorAll("span"); return s[s.length - 1]; }
+    return root.querySelector('.pt[data-p="' + id + '"]');
+  }
+  function topCk(id) { var el = slot(id); if (!el || /^off/.test(id)) return null; var c = el.querySelectorAll(".ck"); return c.length ? c[c.length - 1] : null; }
+  function rectOf(id, size) {
+    var c = topCk(id); if (c) return c.getBoundingClientRect();
+    var el = slot(id), r = el.getBoundingClientRect(), s = size || 30;
+    return { left: r.left + r.width / 2 - s / 2, top: r.top + r.height / 2 - s / 2, width: s, height: s };
+  }
+  function ghost(col, r) {
+    var g = document.createElement("span");
+    g.className = "ck ck--" + col + " ck--ghost";
+    g.style.cssText = "position:fixed;left:" + r.left + "px;top:" + r.top + "px;width:" + r.width + "px;height:" + r.height + "px;margin:0;z-index:60;pointer-events:none";
+    document.body.appendChild(g); return g;
+  }
+  function fly(g, to, ms, fade, cb) {
+    var from = g.getBoundingClientRect();
+    var dx = to.left - from.left + (to.width - from.width) / 2, dy = to.top - from.top + (to.height - from.height) / 2;
+    if (!g.animate || ms <= 0) { g.remove(); cb(); return; }
+    var a = g.animate([{ transform: "translate(0,0)", opacity: 1 }, { transform: "translate(" + dx + "px," + dy + "px)", opacity: fade ? 0 : 1 }],
+                      { duration: ms, easing: "cubic-bezier(.45,0,.2,1)", fill: "forwards" });
+    var over = false; function end() { if (over) return; over = true; g.remove(); cb(); }
+    a.onfinish = end; setTimeout(end, ms + 200);
+  }
+  // ход с анимацией: change() меняет позицию, после перерисовки шашка долетает до места
+  function moveAnimated(side, m, ms, change, after, g0) {
+    anim = true;
+    var col = side === W ? "w" : "b", fromId = idOf(side, m.from), toId = idOf(side, m.to), vic = victimBar(side, m);
+    var g = g0 || ghost(col, rectOf(fromId)), size = g.getBoundingClientRect().width;
+    var vg = vic ? ghost(col === "w" ? "b" : "w", rectOf(toId)) : null;
+    change(); render();
+    var dst = topCk(toId), vdst = vic ? topCk(vic) : null, left = vg ? 2 : 1;
+    if (dst) dst.style.visibility = "hidden";
+    if (vdst) vdst.style.visibility = "hidden";
+    function fin() { if (--left) return; if (dst) dst.style.visibility = ""; if (vdst) vdst.style.visibility = ""; anim = false; after(); }
+    fly(g, rectOf(toId, size), ms, /^off/.test(toId), fin);
+    if (vg) fly(vg, rectOf(vic, size), ms + 120, false, fin);
+  }
+  function mark() {
+    var tg = targets();
+    root.querySelectorAll("[data-p]").forEach(function (el) {
+      var i = +el.getAttribute("data-p");
+      el.classList.toggle("is-pick", canPick(i));
+      el.classList.toggle("is-sel", sel === i);
+      if (el.classList.contains("pt")) el.classList.toggle("is-to", tg.indexOf(i) >= 0);
+    });
+    var ob = elOff.querySelector(".nb__offbtn"); if (ob) { var ok = tg.indexOf(0) >= 0; ob.classList.toggle("is-to", ok); ob.disabled = !ok; }
+  }
+  function pick(from, to) { return firstMoves().filter(function (x) { return x.from === from && x.to === to; })[0]; }
+  function humanMove(m, g0) {
+    hist.push({ S: S, done: done.slice() });
+    moveAnimated(W, m, g0 ? 180 : 320, function () { S = apply(S, W, m); done.push(m); sel = null; legal = legal.filter(prefixOK); }, function () {
+      if (done.length >= legal[0].seq.length) { msg("Ход сделан."); endHuman(); }
+    }, g0);
+  }
+  function dropAt(x, y) {
+    var tg = targets(), el = document.elementFromPoint(x, y), t = el && el.closest("[data-p]");
+    if (t && root.contains(t)) { var i = +t.getAttribute("data-p"); if (tg.indexOf(i) >= 0) return i; }
+    if (tg.indexOf(0) >= 0) {
+      var br = elBoard.getBoundingClientRect();
+      if ((el && el.closest(".nb__off")) || x > br.right) return 0;
+    }
+    return null;
+  }
+  root.addEventListener("pointerdown", function (e) {
+    if (e.button > 0 || anim || drag) return;
     var t = e.target.closest("[data-p]"); if (!t || turn !== W || busy || !legal) return;
     var i = +t.getAttribute("data-p");
-    if (sel != null && targets().indexOf(i) >= 0) {
-      var m = firstMoves().filter(function (x) { return x.from === sel && x.to === i; })[0];
-      hist.push({ S: S, done: done.slice() });
-      S = apply(S, W, m); done.push(m); sel = null;
-      legal = legal.filter(prefixOK);
-      if (done.length >= legal[0].seq.length) { msg("Ход сделан."); endHuman(); return; }
-      render(); return;
-    }
-    if (canPick(i)) { sel = sel === i ? null : i; render(); }
+    if (sel != null && sel !== i && targets().indexOf(i) >= 0) { e.preventDefault(); humanMove(pick(sel, i)); return; }
+    if (!canPick(i)) { if (sel != null) { sel = null; mark(); } return; }
+    e.preventDefault();
+    drag = { i: i, x: e.clientX, y: e.clientY, was: sel === i, g: null, id: e.pointerId, hot: null };
+    sel = i; mark();
+    try { t.setPointerCapture(e.pointerId); } catch (_) {}
   });
-  btnRoll.addEventListener("click", function () { if (turn === W && !legal && !busy) beginHuman(roll()); });
+  root.addEventListener("pointermove", function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.g) {
+      if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) < 8) return;
+      var c = topCk(idOf(W, drag.i)); if (!c) return;
+      var r = c.getBoundingClientRect();
+      drag.r = r; drag.src = c; drag.ox = drag.x - r.left; drag.oy = drag.y - r.top;
+      drag.g = ghost("w", r); drag.g.classList.add("is-drag"); c.style.visibility = "hidden";
+    }
+    drag.g.style.left = (e.clientX - drag.ox) + "px"; drag.g.style.top = (e.clientY - drag.oy) + "px";
+    var to = dropAt(e.clientX, e.clientY), hot = to == null ? null : (to === 0 ? elOff.querySelector(".nb__offbtn") : root.querySelector('.pt[data-p="' + to + '"]'));
+    if (hot !== drag.hot) { if (drag.hot) drag.hot.classList.remove("is-hot"); if (hot) hot.classList.add("is-hot"); drag.hot = hot; }
+  });
+  function endDrag(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var d = drag; drag = null;
+    if (d.hot) d.hot.classList.remove("is-hot");
+    if (!d.g) { if (d.was) { sel = null; mark(); } return; }
+    d.g.classList.remove("is-drag");
+    var to = e.type === "pointerup" ? dropAt(e.clientX, e.clientY) : null;
+    if (to != null) { humanMove(pick(d.i, to), d.g); return; }
+    anim = true;
+    fly(d.g, d.r, 200, false, function () { d.src.style.visibility = ""; anim = false; });
+  }
+  root.addEventListener("pointerup", endDrag);
+  root.addEventListener("pointercancel", endDrag);
+  // клавиатура: Enter/пробел дают click без указателя
+  root.addEventListener("click", function (e) {
+    if (e.detail !== 0 || anim) return;
+    var t = e.target.closest("[data-p]"); if (!t || turn !== W || busy || !legal) return;
+    var i = +t.getAttribute("data-p");
+    if (sel != null && targets().indexOf(i) >= 0) { humanMove(pick(sel, i)); return; }
+    if (canPick(i)) { sel = sel === i ? null : i; mark(); }
+  });
+  btnRoll.addEventListener("click", function () { if (turn === W && !legal && !busy && !anim) beginHuman(roll()); });
   btnNew.addEventListener("click", function () { root.classList.remove("is-over"); newGame(); });
   btnUndo.addEventListener("click", function () {
-    if (!hist.length || turn !== W || busy) return;
+    if (!hist.length || turn !== W || busy || anim) return;
     var h = hist.pop(); S = h.S; done = h.done; sel = null;
     legal = sequences(turnStart, W, dice).filter(prefixOK); render();
   });
