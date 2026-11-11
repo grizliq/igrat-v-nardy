@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Host: https://igrat-v-nardy.com
+Sitemap: https://igrat-v-nardy.com/sitemap.xml
