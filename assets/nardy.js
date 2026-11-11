@@ -135,21 +135,42 @@
   }
 
 
-  // ---------- бросок костей ----------
+  // ---------- бросок костей: объёмные кубики кувыркаются и ложатся выпавшей гранью ----------
   var rolling = false;
-  function setFace(d, n) { var is = d.querySelectorAll("i"); for (var k = 0; k < 9; k++) is[k].className = PIPS[n].indexOf(k + 1) >= 0 ? "on" : ""; }
+  var ORI = { 1: [0, 0], 2: [-90, 0], 3: [0, -90], 4: [0, 90], 5: [90, 0], 6: [0, 180] };
+  var FACES = [[1, "rotateY(0deg)"], [6, "rotateY(180deg)"], [3, "rotateY(90deg)"], [4, "rotateY(-90deg)"], [2, "rotateX(90deg)"], [5, "rotateX(-90deg)"]];
+  function cubeHTML() {
+    return '<span class="d3w"><span class="d3__sh"></span><span class="d3"><span class="d3__cube">' + FACES.map(function (f) {
+      var cells = ""; for (var k = 1; k <= 9; k++) cells += "<i" + (PIPS[f[0]].indexOf(k) >= 0 ? ' class="on"' : "") + "></i>";
+      return '<span class="d3__f" style="transform:' + f[1] + ' translateZ(23px)">' + cells + "</span>";
+    }).join("") + "</span></span></span>";
+  }
   function rollAnim(r, cb) {
-    var my = gid, t0 = Date.now(), dur = 760;
+    var my = gid, ended = 0;
     rolling = true; btnRoll.disabled = true;
-    elDice.innerHTML = dieHTML(1 + Math.floor(Math.random() * 6), false) + dieHTML(1 + Math.floor(Math.random() * 6), false);
-    var ds = elDice.querySelectorAll(".die");
-    ds.forEach(function (d, k) { d.classList.add("die--roll", k ? "die--r2" : "die--r1"); });
-    (function tick() {
+    elDice.innerHTML = cubeHTML() + cubeHTML();
+    var ws = elDice.querySelectorAll(".d3w");
+    function fin() {
+      if (++ended < 2) return;
       if (my !== gid) { rolling = false; return; }
-      if (Date.now() - t0 < dur - 160) { ds.forEach(function (d) { setFace(d, 1 + Math.floor(Math.random() * 6)); }); setTimeout(tick, 70); return; }
-      ds.forEach(function (d, k) { setFace(d, r[k]); d.classList.add("die--land"); });
-      setTimeout(function () { rolling = false; if (my === gid) cb(); }, 260);
-    })();
+      elDice.innerHTML = r.map(function (d) { return dieHTML(d, false); }).join("");
+      rolling = false; cb();
+    }
+    [].forEach.call(ws, function (w, k) {
+      var mover = w.querySelector(".d3"), cube = w.querySelector(".d3__cube"), sh = w.querySelector(".d3__sh"), o = ORI[r[k]], done = false;
+      var sx = Math.random() < .5 ? -1 : 1, tx = 2 + Math.floor(Math.random() * 2), ty = 1 + Math.floor(Math.random() * 2);
+      var end = "rotateX(" + (o[0] + 360 * tx * sx) + "deg) rotateY(" + (o[1] + 360 * ty) + "deg) rotateZ(" + (k ? -360 : 360) + "deg)";
+      var dur = 1100 + k * 130, delay = k * 80;
+      function one() { if (done) return; done = true; fin(); }
+      cube.style.transform = end;
+      if (!cube.animate) { one(); return; }
+      var opt = { duration: dur, delay: delay, fill: "backwards" };
+      cube.animate([{ transform: "rotateX(" + 25 * sx + "deg) rotateY(-35deg) rotateZ(0deg)" }, { transform: end }], { duration: dur, delay: delay, fill: "backwards", easing: "cubic-bezier(.12,.6,.22,1)" });
+      var X = [-170, -70, -14, 2, 8, 10, 0], Y = [-80, -46, 0, -18, 0, -5, 0], T = [0, .2, .42, .58, .74, .86, 1];
+      mover.animate(T.map(function (t, i) { return { transform: "translate(" + X[i] + "px," + Y[i] + "px)", opacity: i ? 1 : 0, offset: t }; }), opt);
+      sh.animate(T.map(function (t, i) { var up = Math.min(1, -Y[i] / 60); return { transform: "translateX(" + X[i] + "px) scale(" + (1 - up * .55) + ")", opacity: i ? .5 - up * .3 : 0, offset: t }; }), opt).onfinish = one;
+      setTimeout(one, dur + delay + 300);
+    });
   }
 
   function firstMoves() { return legal ? legal.map(function (o) { return o.seq[done.length]; }).filter(Boolean) : []; }
@@ -195,8 +216,8 @@
     gid++;
     S = start(); hist = []; done = []; sel = null; legal = null; busy = false; rolled = null;
     var a, b; do { a = roll()[0]; b = roll()[0]; } while (a === b);
-    if (a > b) { turn = W; render(); rollAnim([a, b], function () { beginHuman([a, b]); msg("Вам выпало " + a + ", компьютеру " + b + " — вы ходите первым. Нажмите на свою шашку."); }); }
-    else { turn = B; rolled = null; render(); msg("Компьютеру выпало " + b + ", вам " + a + " — он ходит первым."); setTimeout(function () { rollAnim([b, a], function () { aiTurn([b, a]); }); }, 500); }
+    if (a > b) { turn = W; render(); var g0 = gid; setTimeout(function () { if (g0 === gid) rollAnim([a, b], function () { beginHuman([a, b]); msg("Вам выпало " + a + ", компьютеру " + b + " — вы ходите первым. Нажмите на свою шашку."); }); }, 950); }
+    else { turn = B; rolled = null; render(); msg("Компьютеру выпало " + b + ", вам " + a + " — он ходит первым."); setTimeout(function () { rollAnim([b, a], function () { aiTurn([b, a]); }); }, 1000); }
   }
 
   function beginHuman(r) {
@@ -218,7 +239,7 @@
     var my = gid;
     busy = true; rolled = r; render();
     var seqs = sequences(S, B, expand(r)), best = null, bs = -1e9;
-    seqs.forEach(function (o) { var v = evaluate(o.st, B) + Math.random() * 0.4; if (v > bs) { bs = v; best = o; } });
+    best = choose(seqs, B);
     if (!best || !best.seq.length) { busy = false; turn = W; render(); msg("Компьютеру выпало " + r.join(" и ") + " — ходов нет. Бросайте кости."); return; }
     var steps = best.seq.slice();
     (function step() {
@@ -360,12 +381,103 @@
     if (sel != null && targets().indexOf(i) >= 0) { humanMove(pick(sel, i)); return; }
     if (canPick(i)) { sel = sel === i ? null : i; mark(); }
   });
+
+  function replies(st, side, d) { return sequences(st, side, d); }
+
+  // ---------- сила соперника ----------
+  var LEVELS = [["Внучок", "путает ходы"], ["Сосед по даче", "играет на интерес"], ["Дед со двора", "считает каждый ход"], ["Дед Нардыч", "думает за вас на ход вперёд"]];
+  var level = 1;
+  try { var lv = localStorage.getItem("nardyLevel"); if (lv !== null && +lv >= 0 && +lv <= 3) level = +lv; } catch (_) {}
+  var elLvl = root.querySelector(".nb__lvl");
+  function drawLevel() {
+    if (!elLvl) return;
+    elLvl.innerHTML = '<span class="nb__lvlt">Соперник: <b>' + LEVELS[level][0] + "</b>, " + LEVELS[level][1] + '</span><div class="nb__lvlb" role="radiogroup" aria-label="Сила компьютера">' +
+      LEVELS.map(function (l, k) {
+        var bars = ""; for (var j = 0; j < 4; j++) bars += "<s" + (j <= k ? ' class="on"' : "") + "></s>";
+        return '<button type="button" role="radio" aria-checked="' + (k === level) + '" data-lvl="' + k + '"><span>' + l[0] + '</span><i class="lvlbar" aria-hidden="true">' + bars + "</i></button>";
+      }).join("") + "</div>";
+  }
+  if (elLvl) elLvl.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-lvl]"); if (!b) return;
+    level = +b.getAttribute("data-lvl");
+    try { localStorage.setItem("nardyLevel", String(level)); } catch (_) {}
+    drawLevel();
+    var t = elLvl.querySelector('[data-lvl="' + level + '"]'); if (t) t.focus();
+  });
+  drawLevel();
+  function choose(seqs, side) {
+    if (!seqs.length) return null;
+    var scored = seqs.map(function (o) { return { o: o, v: evaluate(o.st, side) }; });
+    if (level === 0) { if (Math.random() < .55) return seqs[Math.floor(Math.random() * seqs.length)]; scored.forEach(function (x) { x.v += Math.random() * 14; }); }
+    else if (level === 1) scored.forEach(function (x) { x.v += Math.random() * 5; });
+    else if (level === 2) scored.forEach(function (x) { x.v += Math.random() * .3; });
+    scored.sort(function (a, b) { return b.v - a.v; });
+    if (level < 3 || scored.length === 1) return scored[0].o;
+    // Дед Нардыч: для лучших ходов перебирает все 21 бросок соперника и его лучший ответ
+    var best = null, bv = -1e9;
+    scored.slice(0, 5).forEach(function (x) {
+      var tot = 0, ws = 0;
+      for (var a = 1; a <= 6; a++) for (var b = a; b <= 6; b++) {
+        var w = a === b ? 1 : 2, rep = replies(x.o.st, -side, a === b ? [a, a, a, a] : [a, b]), top = null, tv = -1e9;
+        for (var k = 0; k < rep.length; k++) { var v = evaluate(rep[k].st, -side); if (v > tv) { tv = v; top = rep[k]; } }
+        tot += w * (top ? -tv : x.v); ws += w;
+      }
+      var val = tot / ws + x.v * .15;
+      if (val > bv) { bv = val; best = x.o; }
+    });
+    return best;
+  }
+
+  // ---------- живость: сообщения, кости, счёт, раздача, итог партии ----------
+  var _msg = msg;
+  msg = function (t) {
+    _msg(t); elMsg.classList.remove("is-new"); void elMsg.offsetWidth; elMsg.classList.add("is-new");
+    if (/ходов нет/.test(t) && elDice.animate) elDice.animate([{ transform: "translateX(0)" }, { transform: "translateX(-7px)" }, { transform: "translateX(7px)" }, { transform: "translateX(-4px)" }, { transform: "translateX(0)" }], { duration: 400 });
+  };
+  function pop(el) { if (el && el.animate) el.animate([{ transform: "scale(1)" }, { transform: "scale(1.12)", background: "#5A3A20" }, { transform: "scale(1)" }], { duration: 450, easing: "ease-out" }); }
+  var _render = render, offPrev = [0, 0], usedPrev = 0, dealUntil = 0;
+  render = function () {
+    if (dealUntil && Date.now() > dealUntil) { elBoard.classList.remove("is-deal"); dealUntil = 0; }
+    _render();
+    root.classList.toggle("is-you", turn === W);
+    var sp = elOff.querySelectorAll("span");
+    if (S.off[W] > offPrev[0]) pop(sp[0]);
+    if (S.off[B] > offPrev[1]) pop(sp[sp.length - 1]);
+    offPrev = [S.off[W], S.off[B]];
+    var u = elDice.querySelectorAll(".die--used");
+    for (var k = usedPrev; k < u.length; k++) if (u[k].animate) u[k].animate([{ opacity: 1, transform: "scale(1)" }, { opacity: .3, transform: "scale(.86)" }], { duration: 320, easing: "ease-out" });
+    usedPrev = u.length;
+  };
+  var _finish = finish;
+  finish = function (side) {
+    _finish(side);
+    var nm = LEVELS[level][0], mars = side === W ? S.off[B] === 0 : S.off[W] === 0, fr = root.querySelector(".nb__frame");
+    var o = document.createElement("div");
+    o.className = "nb__result" + (side === W ? " is-win" : "");
+    o.innerHTML = "<b>" + (side === W ? "Победа" : "Поражение") + "</b><span>" +
+      (side === W ? (mars ? "С марсом! " + nm + " не успел выбросить ни одной шашки." : "Вы первым вывели все 15 шашек. " + nm + " просит реванш.")
+                  : (mars ? nm + " выиграл с марсом. Отыграемся?" : nm + " оказался быстрее. Сыграем ещё?")) +
+      '</span><button type="button" class="nb__again">Новая партия</button>';
+    fr.appendChild(o);
+  };
+  root.addEventListener("click", function (e) {
+    if (e.target.closest(".nb__again")) { btnNew.click(); return; }
+    var o = e.target.closest(".nb__result"); if (o) o.remove();
+  });
+  var _newGame = newGame;
+  newGame = function () {
+    var o = root.querySelector(".nb__result"); if (o) o.remove();
+    elBoard.classList.add("is-deal"); dealUntil = Date.now() + 1100; usedPrev = 0; offPrev = [0, 0];
+    _newGame();
+  };
+  if (window.__nardyAI) window.__nardyAI({ choose: choose, setLevel: function (l) { level = l; }, sequences: sequences, start: start, evaluate: evaluate, apply: apply, W: W, B: B });
+
   btnRoll.addEventListener("click", function () { if (turn === W && !legal && !busy && !anim && !rolling) { var r = roll(); rollAnim(r, function () { beginHuman(r); }); } });
   btnNew.addEventListener("click", function () { root.classList.remove("is-over"); newGame(); });
   btnUndo.addEventListener("click", function () {
     if (!hist.length || turn !== W || busy || anim) return;
-    var h = hist.pop(); S = h.S; done = h.done; sel = null;
-    legal = sequences(turnStart, W, dice).filter(prefixOK); render();
+    var h = hist.pop(), um = done[done.length - 1];
+    moveAnimated(W, { from: um.to, to: um.from }, 260, function () { S = h.S; done = h.done; sel = null; legal = sequences(turnStart, W, dice).filter(prefixOK); }, function () {});
   });
 
   newGame();
