@@ -134,6 +134,24 @@
     }).join("") + (dbl && turn === W && legal ? '<span class="dbl">осталось ходов: ' + (4 - done.length) + "</span>" : "");
   }
 
+
+  // ---------- бросок костей ----------
+  var rolling = false;
+  function setFace(d, n) { var is = d.querySelectorAll("i"); for (var k = 0; k < 9; k++) is[k].className = PIPS[n].indexOf(k + 1) >= 0 ? "on" : ""; }
+  function rollAnim(r, cb) {
+    var my = gid, t0 = Date.now(), dur = 760;
+    rolling = true; btnRoll.disabled = true;
+    elDice.innerHTML = dieHTML(1 + Math.floor(Math.random() * 6), false) + dieHTML(1 + Math.floor(Math.random() * 6), false);
+    var ds = elDice.querySelectorAll(".die");
+    ds.forEach(function (d, k) { d.classList.add("die--roll", k ? "die--r2" : "die--r1"); });
+    (function tick() {
+      if (my !== gid) { rolling = false; return; }
+      if (Date.now() - t0 < dur - 160) { ds.forEach(function (d) { setFace(d, 1 + Math.floor(Math.random() * 6)); }); setTimeout(tick, 70); return; }
+      ds.forEach(function (d, k) { setFace(d, r[k]); d.classList.add("die--land"); });
+      setTimeout(function () { rolling = false; if (my === gid) cb(); }, 260);
+    })();
+  }
+
   function firstMoves() { return legal ? legal.map(function (o) { return o.seq[done.length]; }).filter(Boolean) : []; }
   function prefixOK(o) { for (var i = 0; i < done.length; i++) { var a = o.seq[i], b = done[i]; if (!a || a.from !== b.from || a.to !== b.to || a.d !== b.d) return false; } return true; }
   function canPick(i) { return turn === W && !busy && firstMoves().some(function (m) { return m.from === i; }); }
@@ -177,8 +195,8 @@
     gid++;
     S = start(); hist = []; done = []; sel = null; legal = null; busy = false; rolled = null;
     var a, b; do { a = roll()[0]; b = roll()[0]; } while (a === b);
-    if (a > b) { turn = W; beginHuman([a, b]); msg("Вам выпало " + a + ", компьютеру " + b + " — вы ходите первым. Нажмите на свою шашку."); }
-    else { turn = B; rolled = [b, a]; render(); msg("Компьютеру выпало " + b + ", вам " + a + " — он ходит первым."); setTimeout(function () { aiTurn([b, a]); }, 900); }
+    if (a > b) { turn = W; render(); rollAnim([a, b], function () { beginHuman([a, b]); msg("Вам выпало " + a + ", компьютеру " + b + " — вы ходите первым. Нажмите на свою шашку."); }); }
+    else { turn = B; rolled = null; render(); msg("Компьютеру выпало " + b + ", вам " + a + " — он ходит первым."); setTimeout(function () { rollAnim([b, a], function () { aiTurn([b, a]); }); }, 500); }
   }
 
   function beginHuman(r) {
@@ -193,7 +211,7 @@
     sel = null; legal = null;
     if (S.off[W] === 15) { finish(W); return; }
     turn = B; render();
-    setTimeout(function () { aiTurn(roll()); }, 500);
+    setTimeout(function () { var r = roll(); msg("Компьютер бросает кости…"); rollAnim(r, function () { aiTurn(r); }); }, 450);
   }
 
   function aiTurn(r) {
@@ -342,7 +360,7 @@
     if (sel != null && targets().indexOf(i) >= 0) { humanMove(pick(sel, i)); return; }
     if (canPick(i)) { sel = sel === i ? null : i; mark(); }
   });
-  btnRoll.addEventListener("click", function () { if (turn === W && !legal && !busy && !anim) beginHuman(roll()); });
+  btnRoll.addEventListener("click", function () { if (turn === W && !legal && !busy && !anim && !rolling) { var r = roll(); rollAnim(r, function () { beginHuman(r); }); } });
   btnNew.addEventListener("click", function () { root.classList.remove("is-over"); newGame(); });
   btnUndo.addEventListener("click", function () {
     if (!hist.length || turn !== W || busy || anim) return;
