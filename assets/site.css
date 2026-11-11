@@ -142,7 +142,7 @@ h1,h2,h3,.logo{font-family:Philosopher,Georgia,serif;font-weight:700}
 .lbc__pct{display:inline-block}.lbc.is-pop .lbc__pct{animation:lbpop .5s cubic-bezier(.3,1.6,.5,1)}
 @keyframes lbpop{40%{transform:scale(1.18)}100%{transform:none}}
 .lbc__code b{color:var(--lb-ink);letter-spacing:.06em}
-.lbc__go,.lbm__go,.lbbar__go,.hcta{animation:lbpulse 2.8s ease-out 1.2s infinite,lbnudge 5s ease-in-out 2.5s infinite}
+.lbc__go,.lbm__go,.hcta{animation:lbpulse 2.8s ease-out 1.2s infinite,lbnudge 5s ease-in-out 2.5s infinite}.lbbar__go{animation:lbnudge 5s ease-in-out 2.5s infinite}
 @keyframes lbnudge{0%,82%,100%{transform:none}85%{transform:translateX(-4px) rotate(-1.5deg)}88%{transform:translateX(4px) rotate(1.5deg)}91%{transform:translateX(-3px)}94%{transform:translateX(2px)}}
 .lbc__go{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 24px;border-radius:10px;background:var(--lb-btn);color:var(--lb-btn-ink)!important;font-weight:700;text-decoration:none;white-space:nowrap}
 .lbc__go:hover,.lbm__go:hover,.lbbar__go:hover,.hcta:hover{background:var(--lb-ink);color:var(--lb-body)!important}
@@ -171,5 +171,6 @@ h1,h2,h3,.logo{font-family:Philosopher,Georgia,serif;font-weight:700}
 .lbbar__x{flex:none;width:34px;height:34px;border:1.5px solid var(--lb-line);border-radius:50%;background:none;color:var(--lb-ink);font-size:18px;line-height:1;cursor:pointer}
 body.has-lbbar{padding-bottom:72px}
 @media(max-width:760px){.hcta{margin-left:auto;min-height:36px;font-size:13px;padding:0 12px}.lbbar__in{gap:10px;padding:8px 12px}.lbbar .lbbadge,.lbbar__d{display:none}.lbbar__t{font-size:14px}.lbbar__go{padding:0 14px}body.has-lbbar{padding-bottom:64px}}
+@media(max-width:560px){.lbbar__in{position:relative;gap:12px;padding:12px 40px 12px 14px}.lbbar__t{font-size:15px;line-height:1.25}.lbbar__t b{display:block;font-size:17px;white-space:nowrap}.lbbar__t small{margin-top:3px;font-size:11.5px}.lbbar__go{min-height:46px;padding:0 16px;font-size:15px}.lbbar__x{position:absolute;top:50%;right:6px;width:28px;height:28px;margin-top:-14px;border:0;font-size:22px;color:var(--lb-mute)}body.has-lbbar{padding-bottom:76px}}
 @media(max-width:560px){.lbc{--cut:100px}.lbc__wheel{width:32px;height:34px}.lbc__pct{font-size:28px}.lbc__brand{font-size:10px}.lbc__main{padding:16px}.lbc .lbc__t{font-size:19px}.lbc__go{flex:1}.lbc__code{flex:1;justify-content:center}}
-@media(prefers-reduced-motion:reduce){.lbc__go,.lbm__go,.lbbar__go,.hcta{animation:lbpulse 2.8s ease-out 1.2s infinite}.lbbar .lbbadge,.lbc.is-spin .lbw,.lbc.is-pop .lbc__pct{animation:none}.lbbar{transition:none}}
+@media(prefers-reduced-motion:reduce){.lbc__go,.lbm__go,.hcta{animation:lbpulse 2.8s ease-out 1.2s infinite}.lbbar__go{animation:none}.lbbar .lbbadge,.lbc.is-spin .lbw,.lbc.is-pop .lbc__pct{animation:none}.lbbar{transition:none}}
