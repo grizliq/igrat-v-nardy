@@ -477,7 +477,7 @@
     o.innerHTML = "<b>" + (side === W ? "Победа" : "Поражение") + "</b><span>" +
       (side === W ? (mars ? "С марсом! " + nm + " не успел выбросить ни одной шашки." : "Вы первым вывели все 15 шашек. " + nm + " просит реванш.")
                   : (mars ? nm + " выиграл с марсом. Отыграемся?" : nm + " оказался быстрее. Сыграем ещё?")) +
-      '</span><button type="button" class="nb__again">Новая партия</button>';
+      '</span><button type="button" class="nb__again">Новая партия</button><small class="nb__rhint">Нажмите на доску, чтобы рассмотреть позицию</small>';
     fr.appendChild(o);
   };
   root.addEventListener("click", function (e) {
