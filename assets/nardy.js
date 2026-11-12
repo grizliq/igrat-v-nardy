@@ -390,19 +390,26 @@
   try { var lv = localStorage.getItem("nardyLevel"); if (lv !== null && +lv >= 0 && +lv <= 3) level = +lv; } catch (_) {}
   var elLvl = root.querySelector(".nb__lvl");
   function drawLevel() {
-    if (!elLvl) return;
-    elLvl.innerHTML = '<span class="nb__lvlt">Соперник: <b>' + LEVELS[level][0] + "</b>, " + LEVELS[level][1] + '</span><div class="nb__lvlb" role="radiogroup" aria-label="Сила компьютера">' +
-      LEVELS.map(function (l, k) {
-        var bars = ""; for (var j = 0; j < 4; j++) bars += "<s" + (j <= k ? ' class="on"' : "") + "></s>";
-        return '<button type="button" role="radio" aria-checked="' + (k === level) + '" data-lvl="' + k + '"><span>' + l[0] + '</span><i class="lvlbar" aria-hidden="true">' + bars + "</i></button>";
-      }).join("") + "</div>";
+    if (elLvl) elLvl.innerHTML = '<span class="nb__lvlt">Соперник: <b>' + LEVELS[level][0] + "</b>, " + LEVELS[level][1] + ". Сменить — «Новая партия».</span>";
   }
-  if (elLvl) elLvl.addEventListener("click", function (e) {
-    var b = e.target.closest("[data-lvl]"); if (!b) return;
+  function bars(k) { var o = ""; for (var j = 0; j < 4; j++) o += "<s" + (j <= k ? ' class="on"' : "") + "></s>"; return '<i class="lvlbar" aria-hidden="true">' + o + "</i>"; }
+  // выбор соперника перед партией
+  function showPicker() {
+    var fr = root.querySelector(".nb__frame"), old = fr.querySelector(".nb__pick"); if (old) old.remove();
+    var o = document.createElement("div");
+    o.className = "nb__pick";
+    o.innerHTML = '<p class="nb__pickt">С кем играем?</p><div class="nb__pickg" role="group" aria-label="Выбор соперника">' +
+      LEVELS.map(function (l, k) {
+        return '<button type="button" data-lvl="' + k + '"' + (k === level ? ' class="is-last"' : "") + ' style="--k:' + k + '"><b>' + l[0] + "</b><span>" + l[1] + "</span>" + bars(k) + "</button>";
+      }).join("") + "</div>";
+    fr.appendChild(o);
+  }
+  root.addEventListener("click", function (e) {
+    var b = e.target.closest(".nb__pick [data-lvl]"); if (!b) return;
     level = +b.getAttribute("data-lvl");
     try { localStorage.setItem("nardyLevel", String(level)); } catch (_) {}
-    drawLevel();
-    var t = elLvl.querySelector('[data-lvl="' + level + '"]'); if (t) t.focus();
+    var o = root.querySelector(".nb__pick"); if (o) o.remove();
+    drawLevel(); startGame();
   });
   drawLevel();
   function choose(seqs, side) {
@@ -465,10 +472,15 @@
     var o = e.target.closest(".nb__result"); if (o) o.remove();
   });
   var _newGame = newGame;
-  newGame = function () {
-    var o = root.querySelector(".nb__result"); if (o) o.remove();
+  function startGame() {
     elBoard.classList.add("is-deal"); dealUntil = Date.now() + 1100; usedPrev = 0; offPrev = [0, 0];
     _newGame();
+  }
+  newGame = function () {
+    var o = root.querySelector(".nb__result"); if (o) o.remove();
+    gid++; turn = 0; legal = null; busy = false; rolled = null; sel = null; done = []; hist = [];
+    S = start(); root.classList.remove("is-over"); render(); msg("Выберите соперника на доске, и начнём.");
+    showPicker();
   };
   if (window.__nardyAI) window.__nardyAI({ choose: choose, setLevel: function (l) { level = l; }, sequences: sequences, start: start, evaluate: evaluate, apply: apply, W: W, B: B });
 

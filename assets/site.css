@@ -156,6 +156,25 @@ h1,h2,h3,.logo{font-family:Philosopher,Georgia,serif;font-weight:700}
 .nb__lvlb button:hover{border-color:var(--brass);color:var(--ink)}
 .nb__lvlb button[aria-checked=true]{background:var(--ivory);border-color:var(--ivory);color:#20140C}
 .lvlbar{display:flex;gap:3px}.lvlbar s{width:12px;height:4px;border-radius:2px;background:currentColor;opacity:.25}.lvlbar s.on{opacity:1}
+/* активная подсветка шашек, которыми можно ходить */
+.pt.is-pick .pt__stack .ck--w:last-child,.bar.is-pick .ck--w:last-child{position:relative;z-index:2;animation:pickw 1.3s ease-in-out infinite}
+@keyframes pickw{0%,100%{transform:scale(1);box-shadow:inset 0 0 0 2px #C7B28A,inset 0 0 0 6px #F6EFE2,inset 0 0 0 7.5px #DCCBA8,0 0 0 3px #F2C14E,0 0 8px 3px rgba(242,193,78,.55)}
+50%{transform:scale(1.08);box-shadow:inset 0 0 0 2px #C7B28A,inset 0 0 0 6px #F6EFE2,inset 0 0 0 7.5px #DCCBA8,0 0 0 4px #FFD978,0 0 20px 8px rgba(255,205,90,.85)}}
+.pt.is-pick .pt__n{z-index:1;color:#20140C;font-weight:700}
+.pt.is-pick .pt__n::before{content:"";position:absolute;left:50%;top:50%;width:18px;height:14px;margin:-7px 0 0 -9px;border-radius:7px;background:#F2C14E;z-index:-1}
+.pt.is-sel .pt__stack .ck--w:last-child,.bar.is-sel .ck--w:last-child{animation:none;transform:scale(1.14);box-shadow:inset 0 0 0 2px #C7B28A,inset 0 0 0 6px #F6EFE2,inset 0 0 0 7.5px #DCCBA8,0 0 0 4px #FFFFFF,0 0 22px 8px rgba(255,240,205,.8)}
+/* выбор соперника перед партией */
+.nb__pick{position:absolute;inset:12px;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;border-radius:8px;background:rgba(32,20,12,.88);animation:resin .3s ease-out both}
+.nb__pickt{margin:0;font:700 clamp(24px,3.6vw,36px)/1.1 Philosopher,Georgia,serif;color:var(--ivory)}
+.nb__pickg{display:grid;grid-template-columns:repeat(2,minmax(0,220px));gap:10px;width:100%;justify-content:center}
+.nb__pickg button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);text-align:left;cursor:pointer;font:inherit;animation:pickin .4s calc(var(--k)*70ms + .1s) cubic-bezier(.3,1.4,.5,1) both;transition:border-color .2s,background-color .2s,transform .2s}
+.nb__pickg button:hover,.nb__pickg button:focus-visible{border-color:var(--brass);background:var(--panel2);transform:translateY(-2px)}
+.nb__pickg button.is-last{border-color:var(--brass)}
+.nb__pickg b{font:700 19px/1.15 Philosopher,Georgia,serif}
+.nb__pickg span{font-size:13px;line-height:1.3;color:var(--mute)}
+.nb__pickg .lvlbar{margin-top:4px;color:var(--brass)}
+@keyframes pickin{from{opacity:0;transform:translateY(12px) scale(.92)}}
+@media(max-width:560px){.nb__pick{inset:6px;gap:8px;padding:8px}.nb__pickg{gap:6px}.nb__pickg button{padding:7px 9px;gap:2px}.nb__pickg b{font-size:15px}.nb__pickg span{display:none}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 @media(max-width:1000px){.nb{grid-template-columns:1fr}.nb__msg{min-height:0}.howto{grid-template-columns:1fr 1fr}.play__head{display:block}.play__lead{margin-top:8px}}
 @media(max-width:900px){.rules{grid-template-columns:1fr 1fr}}
